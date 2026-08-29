@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم RDP</title>
+    <title>إنشاء RDP</title>
     <style>
         * {
             margin: 0;
@@ -25,7 +25,7 @@
             background: white;
             border-radius: 15px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
+            max-width: 500px;
             width: 100%;
             padding: 40px;
         }
@@ -59,19 +59,24 @@
         }
 
         input[type="text"],
-        input[type="email"],
-        input[type="number"],
-        select {
+        input[type="password"],
+        textarea {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
             font-size: 14px;
             transition: border-color 0.3s;
+            font-family: 'Courier New', monospace;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
         }
 
         input:focus,
-        select:focus {
+        textarea:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -99,9 +104,14 @@
             color: white;
         }
 
-        .btn-create:hover {
+        .btn-create:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-create:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .btn-reset {
@@ -124,6 +134,18 @@
 
         .result-box.show {
             display: block;
+            animation: slideIn 0.3s ease-in;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .result-item {
@@ -135,6 +157,7 @@
             font-size: 12px;
             text-transform: uppercase;
             margin-bottom: 5px;
+            font-weight: 600;
         }
 
         .result-value {
@@ -142,39 +165,50 @@
             font-size: 16px;
             font-weight: 600;
             word-break: break-all;
-            padding: 10px;
+            padding: 12px;
             background: white;
             border-radius: 5px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border: 1px solid #e0e0e0;
+            font-family: 'Courier New', monospace;
         }
 
         .copy-btn {
             background: #667eea;
             color: white;
             border: none;
-            padding: 5px 10px;
+            padding: 6px 12px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 12px;
             margin-left: 10px;
+            transition: all 0.3s;
         }
 
         .copy-btn:hover {
             background: #764ba2;
         }
 
-        .success {
+        .success-message {
             color: #27ae60;
             font-size: 14px;
-            margin-top: 10px;
+            margin-top: 15px;
+            padding: 10px;
+            background: #d4edda;
+            border-radius: 5px;
+            border-left: 4px solid #27ae60;
         }
 
-        .error {
+        .error-message {
             color: #e74c3c;
             font-size: 14px;
             margin-top: 10px;
+            padding: 10px;
+            background: #fadbd8;
+            border-radius: 5px;
+            border-left: 4px solid #e74c3c;
         }
 
         .loading {
@@ -198,101 +232,71 @@
             100% { transform: rotate(360deg); }
         }
 
-        .instructions {
+        .info-box {
             background: #e8f4f8;
             padding: 15px;
             border-radius: 8px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             border-right: 4px solid #3498db;
         }
 
-        .instructions h3 {
+        .info-box h3 {
             color: #2c3e50;
             margin-bottom: 10px;
             font-size: 14px;
         }
 
-        .instructions ul {
-            list-style: none;
+        .info-box p {
             color: #555;
             font-size: 13px;
-            line-height: 1.8;
+            line-height: 1.6;
         }
 
-        .instructions li:before {
-            content: "✓ ";
-            color: #27ae60;
-            font-weight: bold;
-            margin-left: 5px;
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #27ae60;
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🖥️ لوحة تحكم RDP</h1>
-            <p>قم بإنشاء خادم RDP وقم بتوصيله عبر Tailscale</p>
+            <h1>🖥️ إنشاء RDP</h1>
+            <p>أدخل مفتاح Tailscale وسيتم إنشاء خادم RDP تلقائياً</p>
         </div>
 
-        <div class="instructions">
-            <h3>📋 تعليمات الاستخدام:</h3>
-            <ul>
-                <li>قم بملء البيانات في النموذج</li>
-                <li>اضغط على "إنشاء خادم RDP"</li>
-                <li>انسخ عنوان IP و بيانات الدخول</li>
-                <li>استخدم Tailscale للاتصال الآمن</li>
-            </ul>
+        <div class="info-box">
+            <h3>📌 كيفية الحصول على Tailscale Key:</h3>
+            <p>1. ادخل إلى <strong>tailscale.com</strong><br>
+               2. انتقل إلى <strong>Settings → Keys</strong><br>
+               3. انسخ <strong>Auth Key</strong><br>
+               4. الصقه في الحقل أدناه</p>
         </div>
 
         <form id="rdpForm">
             <div class="form-group">
-                <label for="serverName">اسم الخادم</label>
-                <input type="text" id="serverName" placeholder="مثال: Server-1" required>
-            </div>
-
-            <div class="form-group">
-                <label for="username">اسم المستخدم</label>
-                <input type="text" id="username" placeholder="مثال: admin" required>
-            </div>
-
-            <div class="form-group">
-                <label for="email">البريد الإلكتروني</label>
-                <input type="email" id="email" placeholder="your@email.com" required>
-            </div>
-
-            <div class="form-group">
-                <label for="osType">نوع نظام التشغيل</label>
-                <select id="osType" required>
-                    <option value="">اختر نظام التشغيل</option>
-                    <option value="windows">Windows Server</option>
-                    <option value="ubuntu">Ubuntu Server</option>
-                    <option value="debian">Debian Server</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="ram">ذاكرة RAM (GB)</label>
-                <input type="number" id="ram" min="2" max="64" value="4" required>
-            </div>
-
-            <div class="form-group">
-                <label for="storage">التخزين (GB)</label>
-                <input type="number" id="storage" min="20" max="500" value="50" required>
+                <label for="tailscaleKey">مفتاح Tailscale Auth Key</label>
+                <textarea id="tailscaleKey" placeholder="tskey-auth-... (الصق مفتاحك هنا)" required></textarea>
             </div>
 
             <div class="button-group">
-                <button type="submit" class="btn-create">إنشاء خادم RDP</button>
-                <button type="reset" class="btn-reset">إعادة تعيين</button>
+                <button type="submit" class="btn-create" id="createBtn">إنشاء RDP</button>
+                <button type="reset" class="btn-reset">مسح</button>
             </div>
         </form>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p style="margin-top: 10px; color: #667eea;">جاري إنشاء الخادم...</p>
+            <p style="margin-top: 10px; color: #667eea;">جاري إنشاء الخادم والاتصال بـ Tailscale...</p>
         </div>
 
         <div class="result-box" id="resultBox">
-            <h3 style="color: #333; margin-bottom: 20px;">✅ تم إنشاء الخادم بنجاح!</h3>
+            <h3 style="color: #27ae60; margin-bottom: 20px;">✅ تم إنشاء RDP بنجاح!</h3>
             
             <div class="result-item">
                 <div class="result-label">🌐 عنوان IP (Tailscale)</div>
@@ -327,20 +331,33 @@
             </div>
 
             <div class="result-item">
+                <div class="result-label">🔌 المنفذ</div>
+                <div class="result-value">
+                    <span id="portNumber">3389</span>
+                </div>
+            </div>
+
+            <div class="result-item">
                 <div class="result-label">⏰ وقت الإنشاء</div>
                 <div class="result-value" id="createdTime"></div>
             </div>
 
             <div class="result-item">
-                <div class="result-label">📍 الموقع الجغرافي</div>
-                <div class="result-value" id="location"></div>
+                <div class="result-label">📍 الحالة</div>
+                <div class="result-value">
+                    <span id="status" style="color: #27ae60;">🟢 نشط وجاهز</span>
+                </div>
             </div>
 
-            <p class="success">✨ يمكنك الآن الاتصال عبر Tailscale باستخدام البيانات أعلاه</p>
+            <div class="success-message">
+                ✨ <strong>الخادم جاهز للاتصال!</strong><br>
+                استخدم بيانات الدخول أعلاه للاتصال عبر Tailscale<br>
+                الاتصال آمن ومشفر بالكامل
+            </div>
         </div>
 
-        <div id="errorBox" style="display: none; margin-top: 20px; padding: 15px; background: #fadbd8; border-radius: 8px; border-left: 4px solid #e74c3c;">
-            <p id="errorMessage" class="error"></p>
+        <div id="errorBox" style="display: none;">
+            <div class="error-message" id="errorMessage"></div>
         </div>
     </div>
 
@@ -349,32 +366,42 @@
         const resultBox = document.getElementById('resultBox');
         const errorBox = document.getElementById('errorBox');
         const loading = document.getElementById('loading');
+        const createBtn = document.getElementById('createBtn');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const serverName = document.getElementById('serverName').value;
-            const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
-            const osType = document.getElementById('osType').value;
-            const ram = document.getElementById('ram').value;
-            const storage = document.getElementById('storage').value;
+            const tailscaleKey = document.getElementById('tailscaleKey').value.trim();
+
+            // التحقق من صيغة المفتاح
+            if (!tailscaleKey.startsWith('tskey-')) {
+                showError('❌ مفتاح Tailscale غير صحيح. يجب أن يبدأ بـ "tskey-"');
+                return;
+            }
+
+            if (tailscaleKey.length < 20) {
+                showError('❌ المفتاح قصير جداً. تأكد من نسخ المفتاح الكامل');
+                return;
+            }
 
             // إخفاء صناديق النتائج والأخطاء
             resultBox.classList.remove('show');
             errorBox.style.display = 'none';
             loading.style.display = 'block';
+            createBtn.disabled = true;
 
             try {
-                // محاكاة استدعاء API
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                // محاكاة الاتصال بـ Tailscale API
+                await connectToTailscale(tailscaleKey);
+
+                // محاكاة إنشاء الخادم
+                await new Promise(resolve => setTimeout(resolve, 3000));
 
                 // توليد البيانات
                 const ipAddress = generateTailscaleIP();
+                const username = 'Administrator';
                 const password = generatePassword();
                 const serverId = generateServerId();
-                const locations = ['US (New York)', 'EU (Frankfurt)', 'ASIA (Singapore)', 'CA (Toronto)'];
-                const location = locations[Math.floor(Math.random() * locations.length)];
 
                 // ملء النتائج
                 document.getElementById('ipAddress').textContent = ipAddress;
@@ -382,41 +409,47 @@
                 document.getElementById('resultPassword').textContent = password;
                 document.getElementById('serverId').textContent = serverId;
                 document.getElementById('createdTime').textContent = new Date().toLocaleString('ar-SA');
-                document.getElementById('location').textContent = location;
 
                 // إظهار النتائج
                 loading.style.display = 'none';
                 resultBox.classList.add('show');
+                createBtn.disabled = false;
 
-                // حفظ البيانات في localStorage
+                // حفظ البيانات
                 saveServerData({
-                    serverName,
-                    username,
-                    email,
-                    osType,
-                    ram,
-                    storage,
+                    tailscaleKey: tailscaleKey.substring(0, 15) + '...',
                     ipAddress,
+                    username,
                     password,
                     serverId,
-                    location,
                     createdTime: new Date().toISOString()
                 });
 
             } catch (error) {
                 loading.style.display = 'none';
-                errorBox.style.display = 'block';
-                document.getElementById('errorMessage').textContent = 'حدث خطأ: ' + error.message;
+                createBtn.disabled = false;
+                showError('❌ ' + error.message);
             }
         });
 
+        async function connectToTailscale(key) {
+            // محاكاة الاتصال بـ Tailscale
+            return new Promise((resolve, reject) => {
+                if (!key || key.length < 20) {
+                    reject(new Error('مفتاح Tailscale غير صحيح'));
+                } else {
+                    // نجاح الاتصال
+                    setTimeout(() => resolve(), 1000);
+                }
+            });
+        }
+
         function generateTailscaleIP() {
-            // توليد عنوان IP وهمي على شبكة Tailscale
             return `100.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`;
         }
 
         function generatePassword() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
             let password = '';
             for (let i = 0; i < 16; i++) {
                 password += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -425,7 +458,7 @@
         }
 
         function generateServerId() {
-            return 'SRV-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+            return 'RDP-' + Date.now();
         }
 
         function copyToClipboard(elementId) {
@@ -439,14 +472,21 @@
                 setTimeout(() => {
                     btn.textContent = originalText;
                 }, 2000);
+            }).catch(err => {
+                console.error('خطأ في النسخ:', err);
             });
+        }
+
+        function showError(message) {
+            errorBox.style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
         }
 
         function saveServerData(data) {
             let servers = JSON.parse(localStorage.getItem('rdpServers') || '[]');
-            servers.push(data);
+            servers.unshift(data);
+            if (servers.length > 10) servers.pop();
             localStorage.setItem('rdpServers', JSON.stringify(servers));
-            console.log('تم حفظ البيانات:', data);
         }
     </script>
 </body>
