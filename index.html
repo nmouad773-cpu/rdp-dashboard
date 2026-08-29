@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم RDP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-create {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-create:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-reset {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-reset:hover {
+            background: #e0e0e0;
+        }
+
+        .result-box {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-box.show {
+            display: block;
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+        }
+
+        .result-label {
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+            word-break: break-all;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .copy-btn:hover {
+            background: #764ba2;
+        }
+
+        .success {
+            color: #27ae60;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f0f0f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .instructions {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-right: 4px solid #3498db;
+        }
+
+        .instructions h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .instructions ul {
+            list-style: none;
+            color: #555;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .instructions li:before {
+            content: "✓ ";
+            color: #27ae60;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖥️ لوحة تحكم RDP</h1>
+            <p>قم بإنشاء خادم RDP وقم بتوصيله عبر Tailscale</p>
+        </div>
+
+        <div class="instructions">
+            <h3>📋 تعليمات الاستخدام:</h3>
+            <ul>
+                <li>قم بملء البيانات في النموذج</li>
+                <li>اضغط على "إنشاء خادم RDP"</li>
+                <li>انسخ عنوان IP و بيانات الدخول</li>
+                <li>استخدم Tailscale للاتصال الآمن</li>
+            </ul>
+        </div>
+
+        <form id="rdpForm">
+            <div class="form-group">
+                <label for="serverName">اسم الخادم</label>
+                <input type="text" id="serverName" placeholder="مثال: Server-1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="username">اسم المستخدم</label>
+                <input type="text" id="username" placeholder="مثال: admin" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">البريد الإلكتروني</label>
+                <input type="email" id="email" placeholder="your@email.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="osType">نوع نظام التشغيل</label>
+                <select id="osType" required>
+                    <option value="">اختر نظام التشغيل</option>
+                    <option value="windows">Windows Server</option>
+                    <option value="ubuntu">Ubuntu Server</option>
+                    <option value="debian">Debian Server</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="ram">ذاكرة RAM (GB)</label>
+                <input type="number" id="ram" min="2" max="64" value="4" required>
+            </div>
+
+            <div class="form-group">
+                <label for="storage">التخزين (GB)</label>
+                <input type="number" id="storage" min="20" max="500" value="50" required>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn-create">إنشاء خادم RDP</button>
+                <button type="reset" class="btn-reset">إعادة تعيين</button>
+            </div>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #667eea;">جاري إنشاء الخادم...</p>
+        </div>
+
+        <div class="result-box" id="resultBox">
+            <h3 style="color: #333; margin-bottom: 20px;">✅ تم إنشاء الخادم بنجاح!</h3>
+            
+            <div class="result-item">
+                <div class="result-label">🌐 عنوان IP (Tailscale)</div>
+                <div class="result-value">
+                    <span id="ipAddress"></span>
+                    <button type="button" class="copy-btn" onclick="copyToClipboard('ipAddress')">نسخ</button>
+                </div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">👤 اسم المستخدم</div>
+                <div class="result-value">
+                    <span id="resultUsername"></span>
+                    <button type="button" class="copy-btn" onclick="copyToClipboard('resultUsername')">نسخ</button>
+                </div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">🔐 كلمة المرور</div>
+                <div class="result-value">
+                    <span id="resultPassword"></span>
+                    <button type="button" class="copy-btn" onclick="copyToClipboard('resultPassword')">نسخ</button>
+                </div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">📌 معرف الخادم</div>
+                <div class="result-value">
+                    <span id="serverId"></span>
+                    <button type="button" class="copy-btn" onclick="copyToClipboard('serverId')">نسخ</button>
+                </div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">⏰ وقت الإنشاء</div>
+                <div class="result-value" id="createdTime"></div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">📍 الموقع الجغرافي</div>
+                <div class="result-value" id="location"></div>
+            </div>
+
+            <p class="success">✨ يمكنك الآن الاتصال عبر Tailscale باستخدام البيانات أعلاه</p>
+        </div>
+
+        <div id="errorBox" style="display: none; margin-top: 20px; padding: 15px; background: #fadbd8; border-radius: 8px; border-left: 4px solid #e74c3c;">
+            <p id="errorMessage" class="error"></p>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('rdpForm');
+        const resultBox = document.getElementById('resultBox');
+        const errorBox = document.getElementById('errorBox');
+        const loading = document.getElementById('loading');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const serverName = document.getElementById('serverName').value;
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const osType = document.getElementById('osType').value;
+            const ram = document.getElementById('ram').value;
+            const storage = document.getElementById('storage').value;
+
+            // إخفاء صناديق النتائج والأخطاء
+            resultBox.classList.remove('show');
+            errorBox.style.display = 'none';
+            loading.style.display = 'block';
+
+            try {
+                // محاكاة استدعاء API
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // توليد البيانات
+                const ipAddress = generateTailscaleIP();
+                const password = generatePassword();
+                const serverId = generateServerId();
+                const locations = ['US (New York)', 'EU (Frankfurt)', 'ASIA (Singapore)', 'CA (Toronto)'];
+                const location = locations[Math.floor(Math.random() * locations.length)];
+
+                // ملء النتائج
+                document.getElementById('ipAddress').textContent = ipAddress;
+                document.getElementById('resultUsername').textContent = username;
+                document.getElementById('resultPassword').textContent = password;
+                document.getElementById('serverId').textContent = serverId;
+                document.getElementById('createdTime').textContent = new Date().toLocaleString('ar-SA');
+                document.getElementById('location').textContent = location;
+
+                // إظهار النتائج
+                loading.style.display = 'none';
+                resultBox.classList.add('show');
+
+                // حفظ البيانات في localStorage
+                saveServerData({
+                    serverName,
+                    username,
+                    email,
+                    osType,
+                    ram,
+                    storage,
+                    ipAddress,
+                    password,
+                    serverId,
+                    location,
+                    createdTime: new Date().toISOString()
+                });
+
+            } catch (error) {
+                loading.style.display = 'none';
+                errorBox.style.display = 'block';
+                document.getElementById('errorMessage').textContent = 'حدث خطأ: ' + error.message;
+            }
+        });
+
+        function generateTailscaleIP() {
+            // توليد عنوان IP وهمي على شبكة Tailscale
+            return `100.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`;
+        }
+
+        function generatePassword() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+            let password = '';
+            for (let i = 0; i < 16; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return password;
+        }
+
+        function generateServerId() {
+            return 'SRV-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ تم النسخ';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        function saveServerData(data) {
+            let servers = JSON.parse(localStorage.getItem('rdpServers') || '[]');
+            servers.push(data);
+            localStorage.setItem('rdpServers', JSON.stringify(servers));
+            console.log('تم حفظ البيانات:', data);
+        }
+    </script>
+</body>
+</html>
